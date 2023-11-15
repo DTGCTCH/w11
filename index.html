@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>
+		Click and Scoring
+	</title>
+	<script src="https://pixijs.download/v5.3.10/pixi.min.js"></script>
+	<style type="text/css">
+		@import url('https://webfontworld.github.io/leferi/LeferiBase.css');
+		body{
+			margin: 0;
+			overflow: hidden;
+		}
+		h1, p, h3{
+			margin: 0
+		}
+		.hidden{
+			display: none;
+		}
+
+		/*alert*/
+		.alert{
+			width:100vw;
+			height: 100vh;
+			background: black;
+		}
+		.alert h1{
+			padding-top: 30vh;
+			text-align: center;
+			font-family: 'LeferiBase' !important;
+			font-weight: 600;
+			color: white;
+			}
+		.alert p{
+			padding-top: 5vh;
+			text-align: center;
+			line-height: 1.5;
+			font-family: 'LeferiBase' !important;
+			color: white;
+		}
+		.alert h3{
+			padding-top: 3vh;
+			text-align: center;
+			line-height: 1.7;
+			font-family: 'LeferiBase' !important;
+			font-weight: 500;
+			color: white;
+		}
+		.alert button{
+			display: block;
+			margin: 4vh auto;
+			border: 1px solid white;
+			outline: none;
+			background: black;
+			color: white;
+			font-family: 'LeferiBase' !important;
+			font-size: 20px;
+			transition: background 0.3s, color 0.3s;
+			padding: 0.5vh 2vh;
+			position: relative;
+			z-index: 3;
+		}
+		.alert button:hover{
+			background: white;
+			color: black;
+		}
+		.caution{
+			position: absolute;
+			width:30vw;
+			top: 40%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 2;
+		}
+
+		/*pageA*/
+			/*게임오버 팝업*/
+		#gameOverPopup{
+			width: 100vw;
+			height: 40vh;
+			padding: 2vh 5vh;
+			background: black;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			text-align: center;
+			z-index: 3;
+			opacity: 0.8;
+		}
+		#gameOverPopup .popuptitle{
+			font-family: 'LeferiBase' !important;
+			font-size: 4vh;
+			font-weight: 700;
+			color: white;
+		}
+		#scoreDisplay{
+			font-family: 'LeferiBase' !important;
+			font-weight: 900;
+			font-size: 12vh;
+			color: white;
+		}
+		#gameOverPopup p{
+			font-family: 'LeferiBase' !important;
+			font-size: 2vh;
+			font-weight: 400;
+			line-height: 1.7;
+			color: white;
+		}
+		#gameOverPopup button{
+			display: inline-block;
+			margin: 2vh 1vh;
+			border: none;
+			outline: none;
+			background: black;
+			color: white;
+			font-family: 'LeferiBase' !important;
+			font-size: 2vh;
+			transition: background 0.3s, color 0.3s;
+			padding: 0.5vh 2vh;
+		}
+		#gameOverPopup button:hover{
+			background: white;
+			color: black;
+		}
+
+			/*게임 상황*/
+		.gametextbox{
+			z-index: 2;
+			width: 100vw;
+			height: 5vh;
+			background: black;
+			position: absolute;
+			text-align: left;
+			top: 0;
+			opacity: 0.8;
+		}
+		.gametextbox input{
+			color: white;
+			border-style: none;
+			background: transparent;
+			font-family: 'LeferiBase' !important;
+			font-size: 2vh;
+			margin: 0.8vh;
+		}
+			/*게임구성*/
+		.pillbox{
+			position:fixed;
+			width: 128px;
+			height: 128px;
+			background-size: contain;
+			background-position: center;
+			filter: blur(1px);
+			z-index: 1;
+		}
+		canvas{;
+			position: absolute;
+			width: 100vw;
+			height: 100vh;
+		}
+		#gamebg {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			filter: blur(50px) saturate(2.5) contrast(1.5);
+			background: 50% / 200% no-repeat
+				url(bg2.png);
+			transform: scale(1.25);
+			z-index: -1;
+			opacity: 0.2;
+		}
+		#gamebg::before {
+			content: "";
+			position: absolute;
+			right: 0;
+			left: 0;
+			top: -50%;
+			bottom: 0;
+			animation: rotate 20s linear infinite;
+			opacity: 1;
+			background: inherit;
+			mix-blend-mode: lighten;
+		}
+		#gamebg::after {
+			content: "";
+			position: absolute;
+			right: 0;
+			left: 0;
+			top: -50%;
+			bottom: 0;
+			animation: rotate 30s linear infinite;
+			animation-direction: reverse;
+			background: inherit;
+			opacity: 1;
+			mix-blend-mode: screen;
+		}	
+
+		@media (orientation: landscape) {
+			#gamebg {
+				&::before,
+				&::after {
+					width: 100vw;
+					height: 100vw;
+				}
+			}
+		}
+		@media (orientation: portrait) {
+			#gamebg {
+				&::before,
+				&::after {
+					width: 100vh;
+					height: 100vh;
+				}
+			}
+		}
+		@keyframes rotate {
+			0% {
+				transform: rotate(0deg) scale(1.25);
+				filter: hue-rotate(-180deg);
+				backdrop-filter: hue-rotate(0deg);
+			}
+			50% {
+				transform: rotate(180deg) scale(1);
+			}
+			100% {
+				transform: rotate(360deg) scale(1.25);
+				filter: hue-rotate(180deg);
+				backdrop-filter: hue-rotate(360deg);
+			}
+		}
+	</style>
+</head>
+<body>
+	<!-- 경고문 -->
+	<div class="alert">
+			<h1>경고: 시작 전 자세히 읽어주세요</h1>
+			<p>번쩍이는 빛이나 무늬와 같은 시각적 이미지에 노출될 시 발작을 일으킬 수 있습니다.<br>광과민성 발작은 환각, 눈이나 얼굴의 경련, 팔이나 다리의 경련이나 떨림, 방향 감각 상실,<br> 정신 착란, 일시적인 의식 상실등과 같은 여러가지 증상으로 나타날수 있습니다.<br><br>이런 증상 중 한가지라도 나타나게 되면 즉시 이용을 중지하고 휴식을 취하세요.</p>
+			<h3>- 조명이 밝은 곳에서 이용을 하십시오<br>
+			- 피곤할 때는 이용을 하지마십시오</h3>
+			<button id="startbutton">시작하기</button>
+			<img src="caution.png" class="caution">
+	</div>
+
+	<!-- 페이지A -->
+	<div class="gametextbox pageA hidden">
+		<input type="text" id="timer" value="" readonly/>
+		<input type="text" id="score" value="" readonly/>
+	</div>
+	<div id="gameOverPopup" class="hidden pageA">
+		<p class="popuptitle">
+			Game Over
+		</p>
+		<span id="scoreDisplay">0</span>
+		<p id="scoreCount">
+			획득 점수: 0
+		</p>
+		<p id="restartCount">
+			플레이 수: 0
+		</p>
+		<button id='restart'>
+			재시작
+		</button>
+		<button id='quit'>
+			종료
+		</button>
+	</div>
+	<canvas id="canvas" class="pageA hidden canvas"></canvas>
+	<div id="gamebg" class="pageA hidden gamebg"></div>
+
+	<!-- 페이지B -->
+	<div class="hidden pageB">
+		1회 플레이 페이지 이동
+	</div>
+
+	<!-- 페이지C -->
+	<div class="hidden pageC">
+		2회 이상 플레이 페이지 이동
+	</div>
+
+	<script type="text/javascript">
+		//시작버튼//
+		document.getElementById('startbutton').addEventListener('click', function (){
+			Ftimer();
+			gameBox();
+			document.querySelector('.alert').classList.add('hidden');
+			document.querySelector('.canvas').classList.remove('hidden');
+			document.querySelector('.gamebg').classList.remove('hidden');
+			const gametextboxes = document.querySelectorAll('.gametextbox');
+		    gametextboxes.forEach(function (element) {
+		        element.classList.remove('hidden');
+		    });
+		});
+
+		//타이머 설정//
+		const timer = document.getElementById('timer')
+		let time = 8000;
+		let sec = 8;
+		timer.value = "남은 시간: " + sec + "sec";
+		let playtime;
+		function Ftimer(){
+			playtime = setInterval(
+				function(){
+					time = time - 1000;
+					if(sec>0){
+						sec = sec - 1;
+						timer.value = "남은 시간: " + sec + "sec";
+					}
+					if(sec===0){
+						clearInterval(playtime);
+						scoreCount.textContent = "획득 점수: " + sv;
+                   		restartCountElement.textContent = "플레이 수: " + restartCount;
+						gameOverPopup.classList.remove("hidden");
+						isClickEnabled = false;
+
+						let playerRank = "신입";
+						for(const rankInfo of rankData){
+							if(sv >= rankInfo.minScore && sv <= rankInfo.maxScore) {
+								playerRank = rankInfo.rank;                                                                                          
+								break;
+							}
+						}
+						const scoreDisplay = document.getElementById('scoreDisplay');
+						scoreDisplay.textContent = playerRank;
+					}
+				},1000);
+		}
+
+		//팝업 리스타트 버튼//
+		const restartButton = document.getElementById('restart')
+		const restartCountElement = document.getElementById("restartCount")
+		let restartCount = 0;
+
+		restartButton.addEventListener('click',function(){
+			gameOverPopup.classList.add('hidden');
+			sec = 8;
+			timer.value = "남은 시간: " + sec + "sec";
+			sv = 0
+			score.value =  "획득 점수: " + sv;
+			isClickEnabled = true;
+			Ftimer();
+			gameBox();
+			restartCount++;
+   			restartCountElement.textContent = "플레이 수: " + restartCount;
+			handleRestartStyleChanges();
+		})
+
+		//배경 변경//
+		function handleRestartStyleChanges() {
+		    const gamebg = document.getElementById('gamebg');
+		    if (restartCount === 1) {
+		        gamebg.style.opacity = '0.2';
+		        gamebg.style.filter = 'blur(50px)';
+		    } else if (restartCount === 2) {
+		        gamebg.style.opacity = '0.5';
+		        gamebg.style.filter = 'blur(30px)';
+		    } else if (restartCount === 3) {
+		        gamebg.style.opacity = '0.8';
+		        gamebg.style.filter = 'blur(15px)';
+		    } else if (restartCount === 4) {
+		        gamebg.style.opacity = '1';
+		        gamebg.style.filter = 'blur(0px)';
+		    }
+		}
+
+
+
+		//팝업 종료 버튼//
+		document.getElementById('quit').addEventListener('click', function () {
+		    let pageAElements = document.querySelectorAll('.pageA');
+		    pageAElements.forEach(element => {
+		        element.style.display = 'none';
+		    });
+
+		    let pillboxes = document.querySelectorAll(".pillbox");
+		    pillboxes.forEach(function (pillbox) {
+		        pillbox.parentNode.removeChild(pillbox);
+		    });
+
+		    //.pageB/C, .hidden 붙여야함 이제
+		    let pageBElements = document.querySelectorAll(".pageB");
+		    let pageCElements = document.querySelectorAll(".pageC");
+		    if(restartCount < 2){
+		    	pageBElements.forEach(element => {
+		        	element.classList.remove('hidden');
+		        });
+		    } else {
+		    	pageCElements.forEach(element => {
+		    		element.classList.remove('hidden');
+		    	})
+		    };
+		});
+
+		//게임//
+		var sv = 0;
+		const score = document.getElementById('score')
+		score.value = "획득 점수: " + sv;
+		let isClickEnabled = true;
+		const pillboximg = ['cc1.png', 'cc2.png', 'cc3.png', 'cc4.png', 'cc5.png', 'cc6.png', 'cc7.png', 'cc8.png', 'cc9.png', 'cc10.png'];
+
+		function getrandomimg(){
+			const randomIndex = Math.floor(Math.random() * pillboximg.length);
+			return pillboximg[randomIndex];
+		}
+		function gameBox(){
+			var pillbox = document.createElement("div")
+			var imageSize = Math.floor(Math.random() * (96 - 32 + 1)) + 32;
+			pillbox.className = "pillbox";
+			pillbox.style.backgroundImage = `url(${getrandomimg()})`;
+			var w = Math.random() * (window.innerWidth - imageSize);
+			var h = Math.random() * (window.innerHeight - imageSize);
+			pillbox.style.width = imageSize + "px";
+    		pillbox.style.height = imageSize + "px";
+			pillbox.style.left = w + "px";
+			pillbox.style.top = h + "px";
+			pillbox.onclick = function(){
+				if(isClickEnabled){
+					sv += 1;
+					score.value = "획득 점수: " + sv;
+					pillbox.parentNode.removeChild(pillbox);
+					gameBox();
+				}
+			}
+			document.body.appendChild(pillbox);
+		}
+
+		const rankData = [
+	        { rank: "F", minScore: 0, maxScore: 2 },
+	        { rank: "D", minScore: 3, maxScore: 6 },
+	        { rank: "C", minScore: 7, maxScore: 11 },
+	        { rank: "B", minScore: 12, maxScore: 17 },
+	        { rank: "A", minScore: 18, maxScore: 23 },
+	        { rank: "S", minScore: 24, maxScore: 29 },
+	        { rank: "S+", minScore: 30, maxScore: 999 },
+    	];
+
+		
+	</script>
+</body>
+</html>
